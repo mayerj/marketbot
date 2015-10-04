@@ -52,7 +52,7 @@ class EveDb
 	def find(item)
 		downcased = item.downcase
 		result = []
-
+		resultAny = []
 		exact = nil
 
 		@db_lower.each do |k, v|
@@ -63,12 +63,20 @@ class EveDb
 			if v.start_with? downcased
 				result.push(k)
 			end
+			
+			allowed = Regexp.union(/\W+/, " ")
+#			puts v.gsub(allowed, ' ')	
+			if v.gsub(allowed, ' ').split.include?(downcased)
+				resultAny.push(k)
+			end
 		end
 
-		if exact.nil?
+		if !exact.nil?
+			[exact]
+		elsif result.count > 0
 			result
 		else
-			[exact]
+			resultAny
 		end
 	end
 end
