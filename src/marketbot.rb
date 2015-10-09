@@ -31,7 +31,8 @@ client.on :message do |data|
 		begin
 			parser = Parser.new eve_db
 			parser.handle(client, data)
-		rescue
+		rescue Exception => e
+			print "Exception #{e}\r\n#{e.backtrace}\r\n"
 		end
 	end	#client.message channel: data['channel'], text: "hi!"
 end

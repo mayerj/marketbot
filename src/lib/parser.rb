@@ -11,12 +11,21 @@ class Parser
 		command = extract_command(data['text'])
 
 		if command.nil?
+			print data['text']
+			print "\r\n"
+			print "no command\r\n"
 			return
 		end
 
+		print "#{command}\r\n"
+
 		case command
 			when 'price' then
-				process_price_request(client, data)
+				process_price_request_jita(client, data)
+			when 'pricesystem' then
+				process_price_request_system(client, data)
+			else
+				print "#{command}\r\n"
 		end
 	end
 
@@ -39,8 +48,8 @@ class Parser
 		end
 	end
 
-	def extract_item(text)
-		m = /^.+?: price (.*)$/.match(text).captures[0].strip
+	def extract_item(command, text)
+		m = /^.+?: #{command} (.*)$/.match(text).captures[0].strip
 		m
 	end
 
@@ -48,25 +57,45 @@ class Parser
 		"#{num.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} ISK"
 	end
 
-	def process_price_request(client, data)
-		item = extract_item(data['text'])
+	def process_price_request_system(client, data)
+		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=Jita&typeid=#{type_id}") }
+
+		process_price_request(client, data, 'pricesystem', by_system)
+	end
+
+	def query_by_system()
+	end
+
+	def process_price_request_jita(client, data)
+		by_jita_region = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?regionlimit=10000002&typeid=#{type_id}") }
+
+		process_price_request(client, data, 'price', by_jita_region)
+	end
+
+	def process_price_request(client, data, command, querier)
+		item = extract_item(command, data['text'])
 
 		type_ids = @eve_db.find(item)
 		
 		s = ""
-		
+	
+		r = ""	
 		if type_ids.count != 1
 			s = "Couldn't find \"#{item}\""
+			r = ":\r\n"
 		end
 		
 		if type_ids.count > 0
-			s += ":\r\nDid you mean:\r\n"
+			s += "#{r}Did you mean:\r\n"
 		end
+
 
 		i = 0
 		type_ids.each do |type_id|
 			actual_type_id = type_id
-			result = Net::HTTP.get("api.eve-central.com", "/api/quicklook?regionlimit=10000002&typeid=#{actual_type_id}")
+
+
+			result = querier.call(actual_type_id)
 
 			quick_look = EveCentral::QuickLook.new result
 
