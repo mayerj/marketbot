@@ -30,8 +30,9 @@ client.on :message do |data|
 	if data['user'] != client.self['id']
 	
 		begin
-			parser = Parser.new eve_db, system_db
-			parser.handle(client, data)
+			parser = Parser.new eve_db, system_db, client, data
+			parser.handle
+
 		rescue Exception => e
 			print "Exception #{e}\r\n#{e.backtrace}\r\n"
 		end

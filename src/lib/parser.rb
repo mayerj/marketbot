@@ -1,27 +1,30 @@
 require 'net/http'
 require 'nokogiri'
 require './lib/evecentral'
+require './lib/command'
 
 class Parser
-	def initialize(eve_db, systems)
+	def initialize(eve_db, systems, client, data)
 		@eve_db = eve_db
 		@systems_db = systems
+		@client = client
+		@data = data
 	end
 
-	def handle(client, data)
-		command = extract_command(data['text'])
+	def handle()
+		command = extract_command(@data['text'])
 
 		if command.nil?
 			return
 		end
 
-		case command
+		case command.command
 			when 'price' then
-				process_price_request_jita(client, data)
+				process_price_request_jita(command)
 			when 'pricesystem' then
-				process_price_request_system(client, data)
-			else
-				print "#{command}\r\n"
+				process_price_request_system(command)
+			#else
+			#	print "#{command}\r\n"
 		end
 	end
 
@@ -40,7 +43,7 @@ class Parser
 		if m.nil?
 			nil
 		else
-			m.split()[0]
+			Command.new m
 		end
 	end
 
@@ -53,33 +56,40 @@ class Parser
 		"#{num.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} ISK"
 	end
 
-	def process_price_request_system(client, data)
-		text = extract_item('pricesystem', data['text'])
-		system = text.split[0]
+	def process_price_request_system(command)
+		p command
+		system = command.get_argument(0, 0)
 
 		systemId = @systems_db.get_system_id(system)
 		
 		if systemId.nil?
-	                client.message channel: data['channel'], text: "What is #{system}?"
+			respond("What is #{system}")
 			return
 		end
 
 		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=#{systemId}&typeid=#{type_id}") }
 
-		process_price_request(client, data, "pricesystem #{system}", by_system)
+		maybe_item = ""
+		if command.arguments[0][0] == '"'
+			idx = command.arguments[0].index('"', 1) + 1
+			maybe_item = command.arguments[0][idx..-1].strip
+		else
+			idx = command.arguments[0].index(' ', 0)
+			maybe_item = command.arguments[0][idx..-1]
+		end
+
+		maybe_item.strip!
+
+		process_price_request(command, maybe_item, by_system, system)
 	end
 
-	def query_by_system()
-	end
-
-	def process_price_request_jita(client, data)
+	def process_price_request_jita(command)
 		by_jita_region = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?regionlimit=10000002&typeid=#{type_id}") }
 
-		process_price_request(client, data, 'price', by_jita_region)
+		process_price_request(command, command.arguments[0], by_jita_region, "Jita")
 	end
 
-	def process_price_request(client, data, command, querier)
-		item = extract_item(command, data['text'])
+	def process_price_request(command, item, querier, where)
 
 		type_ids = @eve_db.find(item)
 		
@@ -108,7 +118,7 @@ class Parser
 			lowest = quick_look.get_lowest_price
 
 			if lowest.nil?
-				s += "#{@eve_db.get_name(actual_type_id.to_i)} not available in Jita\r\n"
+				s += "#{@eve_db.get_name(actual_type_id.to_i)} not available in #{where}\r\n"
 			else
 				s += "#{@eve_db.get_name(actual_type_id.to_i)} is #{to_eve_price(lowest)}\r\n"
 			end
@@ -120,6 +130,10 @@ class Parser
 			end
 		end
 
-		client.message channel: data['channel'], text: s
+		respond(s)
+	end
+
+	def respond(s)
+		@client.message channel: @data['channel'], text: s
 	end
 end
