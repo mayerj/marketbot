@@ -69,16 +69,7 @@ class Parser
 
 		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=#{systemId}&typeid=#{type_id}") }
 
-		maybe_item = ""
-		if command.arguments[0][0] == '"'
-			idx = command.arguments[0].index('"', 1) + 1
-			maybe_item = command.arguments[0][idx..-1].strip
-		else
-			idx = command.arguments[0].index(' ', 0)
-			maybe_item = command.arguments[0][idx..-1]
-		end
-
-		maybe_item.strip!
+		maybe_item = command.get_rest(0, 0)
 
 		process_price_request(command, maybe_item, by_system, system)
 	end
