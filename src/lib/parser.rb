@@ -76,12 +76,11 @@ class Parser
 
 	def process_price_request_jita(command)
 		by_jita_region = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?regionlimit=10000002&typeid=#{type_id}") }
-
 		process_price_request(command, command.arguments[0], by_jita_region, "Jita")
 	end
 
 	def process_price_request(command, item, querier, where)
-
+		p item
 		type_ids = @eve_db.find(item)
 		
 		s = ""

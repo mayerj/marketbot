@@ -6,9 +6,11 @@ db = EveDb.new '../data/typeIDs.yaml'
 
 toFind = ARGV[0]
 
-p =  db.find(toFind)
+p toFind
 
-p.each do |typeId|
+pp =  db.find(toFind)
+
+pp.each do |typeId|
 	name = db.get_name typeId
 	print "#{name}\r\n"
 end
