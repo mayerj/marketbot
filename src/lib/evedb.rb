@@ -80,3 +80,22 @@ class EveDb
 		end
 	end
 end
+
+
+class SystemDb
+	def initialize(path)
+		@db = YAML::load_file("../data/systemIds.yaml")
+
+		@by_id = {}
+		@by_name = {}
+
+		@db.each do |x|
+			@by_id[x[:systemId]] = x[:name]
+			@by_name[x[:name].downcase] = x[:systemId]
+		end
+	end
+
+	def get_system_id(system)
+		@by_name[system.downcase]
+	end
+end

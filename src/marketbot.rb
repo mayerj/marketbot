@@ -24,12 +24,13 @@ client.on :hello do
 end
 
 eve_db = EveDb.new "data/universeDataDx.db"
+system_db = SystemDb.new "data/systemIds.yaml"
 
 client.on :message do |data|
 	if data['user'] != client.self['id']
 	
 		begin
-			parser = Parser.new eve_db
+			parser = Parser.new eve_db, system_db
 			parser.handle(client, data)
 		rescue Exception => e
 			print "Exception #{e}\r\n#{e.backtrace}\r\n"

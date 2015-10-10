@@ -3,21 +3,17 @@ require 'nokogiri'
 require './lib/evecentral'
 
 class Parser
-	def initialize(eve_db)
+	def initialize(eve_db, systems)
 		@eve_db = eve_db
+		@systems_db = systems
 	end
 
 	def handle(client, data)
 		command = extract_command(data['text'])
 
 		if command.nil?
-			print data['text']
-			print "\r\n"
-			print "no command\r\n"
 			return
 		end
-
-		print "#{command}\r\n"
 
 		case command
 			when 'price' then
@@ -58,9 +54,14 @@ class Parser
 	end
 
 	def process_price_request_system(client, data)
-		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=Jita&typeid=#{type_id}") }
+		text = extract_item('pricesystem', data['text'])
+		system = text.split[0]
 
-		process_price_request(client, data, 'pricesystem', by_system)
+		systemId = @systems_db.get_system_id(system)
+
+		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=#{systemId}&typeid=#{type_id}") }
+
+		process_price_request(client, data, "pricesystem #{system}", by_system)
 	end
 
 	def query_by_system()
