@@ -58,6 +58,11 @@ class Parser
 		system = text.split[0]
 
 		systemId = @systems_db.get_system_id(system)
+		
+		if systemId.nil?
+	                client.message channel: data['channel'], text: "What is #{system}?"
+			return
+		end
 
 		by_system = Proc.new { |type_id| Net::HTTP.get("api.eve-central.com", "/api/quicklook?usesystem=#{systemId}&typeid=#{type_id}") }
 
