@@ -15,7 +15,8 @@ end
 
 web = Slack::Web::Client.new
 
-print web.auth_test
+results = web.auth_test
+p results
 
 client = Slack::RealTime::Client.new
 
@@ -30,7 +31,7 @@ client.on :message do |data|
 	if data['user'] != client.self['id']
 	
 		begin
-			parser = Parser.new eve_db, system_db, client, data
+			parser = Parser.new eve_db, system_db, client, data, results['user_id']
 			parser.handle
 
 		rescue Exception => e

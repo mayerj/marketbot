@@ -4,11 +4,12 @@ require './lib/evecentral'
 require './lib/command'
 
 class Parser
-	def initialize(eve_db, systems, client, data)
+	def initialize(eve_db, systems, client, data, user_id)
 		@eve_db = eve_db
 		@systems_db = systems
 		@client = client
 		@data = data
+		@user_id = user_id
 	end
 
 	def handle()
@@ -30,9 +31,9 @@ class Parser
 
 	def extract_query(text)
 		begin
-			m = /^.+?:(.+?)$/.match(text).captures[0].strip
+			m = /^\<\@#{@user_id}\>:(.+?)$/.match(text).captures[0].strip
 			m
-		rescue
+		rescue Exception => e
 			nil
 		end
 	end
@@ -80,7 +81,6 @@ class Parser
 	end
 
 	def process_price_request(command, item, querier, where)
-		p item
 		type_ids = @eve_db.find(item)
 		
 		s = ""
@@ -91,7 +91,7 @@ class Parser
 			r = ":\r\n"
 		end
 		
-		if type_ids.count > 0
+		if type_ids.count > 1
 			s += "#{r}Did you mean:\r\n"
 		end
 
@@ -110,7 +110,7 @@ class Parser
 			if lowest.nil?
 				s += "#{@eve_db.get_name(actual_type_id.to_i)} not available in #{where}\r\n"
 			else
-				s += "#{@eve_db.get_name(actual_type_id.to_i)} is #{to_eve_price(lowest)}\r\n"
+				s += "#{@eve_db.get_name(actual_type_id.to_i)} is #{to_eve_price(lowest)} in #{where}\r\n"
 			end
 
 			i = i+1
