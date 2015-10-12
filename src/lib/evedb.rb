@@ -1,13 +1,26 @@
 require "yaml"
 
+class EveItem
+	attr_accessor :itemId
+	attr_accessor :name
+
+	def initialize(itemId, name)
+		@itemId = itemId
+		@name = name
+	end
+end
+
 class EveDb
 	def initialize(path)
 		if File.exists? "../data/typeIDs.cache"
 			@db = YAML::load_file("../data/typeIDs.cache")	
 
+			allowed = Regexp.union(/\W+/, " ")
 			@db_lower = {}
+			@db_lower_gsub = {}
 			@db.each do |k, v|
 				@db_lower[k] = v.downcase
+				@db_lower_gsub[k] = Set.new(v.gsub(allowed, ' ').split)
 			end
 		else
 			load_db()
@@ -26,6 +39,9 @@ class EveDb
 
 		map = {}
 		map_lower = {}
+		map_lower_gsub = {}
+		
+		allowed = Regexp.union(/\W+/, " ")
 		
 		db.each do |s|
 			type_id = s[0]
@@ -36,11 +52,13 @@ class EveDb
 			if !z.nil?
 				map[type_id] = z
 				map_lower[type_id] = z.downcase
+				map_lower_gsub[type_id] = Set.new(z.downcase.gsub(allowed, ' ').split)
 			end
 		end
 
 		@db = map
 		@db_lower = map_lower
+		@db_lower_gsub = map_lower_gsub
 
 		print "Loaded #{map.count}\r\n"
 	end
@@ -50,10 +68,22 @@ class EveDb
 	end
 
 	def find(item)
+		ids = find_(item)
+
+		items = []
+		ids.each do |id|
+			items.push EveItem.new id, get_name(id)
+		end
+
+		items
+	end
+
+	def find_(item)
 		downcased = item.downcase
 		result = []
 		resultAny = []
 		exact = nil
+		
 
 		@db_lower.each do |k, v|
 			if v == downcased
@@ -63,10 +93,8 @@ class EveDb
 			if v.start_with? downcased
 				result.push(k)
 			end
-			
-			allowed = Regexp.union(/\W+/, " ")
-#			puts v.gsub(allowed, ' ')	
-			if v.gsub(allowed, ' ').split.include?(downcased)
+
+			if @db_lower_gsub[k].include?(downcased)
 				resultAny.push(k)
 			end
 		end

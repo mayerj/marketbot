@@ -29,7 +29,6 @@ system_db = SystemDb.new "data/systemIds.yaml"
 
 client.on :message do |data|
 	if data['user'] != client.self['id']
-	
 		begin
 			parser = Parser.new eve_db, system_db, client, data, results['user_id']
 			parser.handle
