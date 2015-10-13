@@ -51,7 +51,7 @@ SQL
 #printer.print(STDOUT, {})
 
 		assert_equal false, fit.has_unknown_items
-		assert_equal 18, fit.items.count
+		assert_equal 16, fit.items.count
 	end
 
 	def test_fits_work_with_ammo

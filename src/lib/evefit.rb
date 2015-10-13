@@ -24,6 +24,8 @@ class EveFit
 		@items = []	
 		@quantity = {}
 
+		seen = {}
+
 		fit.split(/\r|\n/).each do |line|
 			line.strip!
 
@@ -45,8 +47,13 @@ class EveFit
 
 			case possibleMatches.count
 				when 1 then
-					@items.push possibleMatches[0]
-					@quantity[possibleMatches[0]] = quantity
+					if seen.include? possibleMatches[0].itemId
+						@quantity[seen[possibleMatches[0].itemId]] += quantity
+					else
+						seen[possibleMatches[0].itemId] = possibleMatches[0]
+						@items.push possibleMatches[0]
+						@quantity[possibleMatches[0]] = quantity
+					end
 				else					
 					@unknown_items.push name
 			end
