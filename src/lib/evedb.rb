@@ -1,12 +1,14 @@
 require "yaml"
+require "set"
 
 class EveItem
 	attr_accessor :itemId
 	attr_accessor :name
 
-	def initialize(itemId, name)
+	def initialize(itemId, name, parts)
 		@itemId = itemId
 		@name = name
+		@parts = parts
 	end
 end
 
@@ -19,8 +21,9 @@ class EveDb
 			@db_lower = {}
 			@db_lower_gsub = {}
 			@db.each do |k, v|
-				@db_lower[k] = v.downcase
-				@db_lower_gsub[k] = Set.new(v.gsub(allowed, ' ').split)
+				lowercase = v.downcase
+				@db_lower[k] = lowercase
+				@db_lower_gsub[k] = Set.new(lowercase.gsub(allowed, ' ').split)
 			end
 		else
 			load_db()
@@ -69,10 +72,13 @@ class EveDb
 
 	def find(item)
 		ids = find_(item)
+		
+		allowed = Regexp.union(/\W+/, " ")
 
 		items = []
 		ids.each do |id|
-			items.push EveItem.new id, get_name(id)
+			name = get_name(id)
+			items.push EveItem.new id, name, name.downcase.gsub(allowed, ' ').split
 		end
 
 		items
@@ -93,6 +99,8 @@ class EveDb
 			if v.start_with? downcased
 				result.push(k)
 			end
+
+			#p k, @db_lower_gsub[k]
 
 			if @db_lower_gsub[k].include?(downcased)
 				resultAny.push(k)

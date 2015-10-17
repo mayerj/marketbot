@@ -26,11 +26,12 @@ end
 
 eve_db = EveDb.new "data/universeDataDx.db"
 system_db = SystemDb.new "data/systemIds.yaml"
+cache = EveCentral::QuickLookCache.new
 
 client.on :message do |data|
 	if data['user'] != client.self['id']
 		begin
-			parser = Parser.new eve_db, system_db, client, data, results['user_id']
+			parser = Parser.new eve_db, system_db, client, data, results['user_id'], cache
 			parser.handle
 
 		rescue Exception => e

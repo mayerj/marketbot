@@ -26,7 +26,11 @@ class EveFit
 
 		seen = {}
 
-		fit.split(/\r|\n/).each do |line|
+		lines = fit.split(/\r|\n/)
+
+		lines.delete("")
+
+		lines.each do |line|
 			line.strip!
 
 			if line.length == 0
@@ -54,8 +58,18 @@ class EveFit
 						@items.push possibleMatches[0]
 						@quantity[possibleMatches[0]] = quantity
 					end
-				else					
-					@unknown_items.push name
+				else
+					if lines.count == 1
+						possibleMatches.each do |m|
+							@items.push m
+							@quantity[m] = 1
+							if @items.count > 25
+								break
+							end
+						end
+					else
+						@unknown_items.push name
+					end
 			end
 		end
 	end
