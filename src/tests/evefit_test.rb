@@ -82,4 +82,11 @@ SQL
 		fit = EveFit.new evedb, ship
 		assert_equal false, fit.has_unknown_items
 	end
+
+	def test_exotic_dancers
+		evedb = EveDb.new "../data/typeIDs.cache" 
+		fit = EveFit.new evedb, "Exotic Dancers, Female"
+		assert_equal false, fit.has_unknown_items
+		assert_equal 1, fit.items.count
+	end
 end

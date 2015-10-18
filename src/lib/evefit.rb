@@ -41,7 +41,7 @@ class EveFit
 				line = line[1..-2]
 			end
 			
-			if line.include?(',')
+			if line.include?(',') and not evedb.find(line).length == 1
 				line = line.split(',')[0].strip
 			end
 
