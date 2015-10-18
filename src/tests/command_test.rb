@@ -21,8 +21,8 @@ class TestSimplePriceCommand < MiniTest::Unit::TestCase
 	
 	def test_multi_line_command
 		command = Command.new "price Mid-Grade Crystal\r\nfoo"
-		assert_equal ["Mid-Grade Crystal","foo"], command.arguments
-		assert_equal "foo", command.get_argument(1,0)
+		assert_equal ["Mid-Grade Crystal","","foo"], command.arguments
+		assert_equal "foo", command.get_argument(2,0)
 	end
 	
 	def test_command_single_args
@@ -46,5 +46,10 @@ class TestSimplePriceCommand < MiniTest::Unit::TestCase
 		
 		command = Command.new "pricesystem jita test long strings"
 		assert_equal "test long strings", command.get_rest(0, 0)
+	end
+
+	def test_command_get_rest
+		command = Command.new "pricehub Nestor"
+		assert_equal "Nestor", command.get_line(0)
 	end
 end

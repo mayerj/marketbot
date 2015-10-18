@@ -134,4 +134,8 @@ class SystemDb
 	def get_system_id(system)
 		@by_name[system.downcase]
 	end
+
+	def get_name(systemId)
+		@by_id[systemId]
+	end
 end

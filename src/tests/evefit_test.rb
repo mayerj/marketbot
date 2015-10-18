@@ -89,4 +89,5 @@ SQL
 		assert_equal false, fit.has_unknown_items
 		assert_equal 1, fit.items.count
 	end
+
 end

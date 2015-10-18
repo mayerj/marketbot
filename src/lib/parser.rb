@@ -29,6 +29,8 @@ class Parser
 					process_price_request_system(command)
 				when 'search' then
 					process_search(command)
+				when 'pricehub' then
+					process_hub_request(command)
 			end
 		ensure
 		end
@@ -70,6 +72,19 @@ class Parser
 		"#{f.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} ISK"
 	end
 
+	def process_hub_request(command)
+		
+		maybe_items =  command.get_line(0)
+
+		for i in 1..command.arguments.length do
+			maybe_items += "\r\n#{command.arguments[i]}"
+		end
+		
+		["Jita", "Amarr", "Hek", "Rens"].each do |system|
+			process_price_request_by_system(command, maybe_items, system, @systems_db.get_system_id(system), true, false)
+		end
+	end
+
 	def process_price_request_system(command)
 		system = command.get_argument(0, 0)
 
@@ -79,16 +94,21 @@ class Parser
 			respond("What is #{system}")
 			return
 		end
-
-		by_system = EveCentral::QuickLookEndpoint.new @quick_look_cache, systemId
-
+		
 		maybe_items =  command.get_rest(0, 0)
 
 		for i in 1..command.arguments.length do
 			maybe_items += "\r\n#{command.arguments[i]}"
 		end
 
-		process_price_request(command, maybe_items, by_system.method(:get_by_system), system)
+		process_price_request_by_system(command, maybe_items, @systems_db.get_name(systemId), systemId, true, true)
+	end
+
+	def process_price_request_by_system(command, maybe_items, system, systemId, show_total, show_breakdown)
+		by_system = EveCentral::QuickLookEndpoint.new @quick_look_cache, systemId
+
+
+		process_price_request(command, maybe_items, by_system.method(:get_by_system), system, show_total, show_breakdown)
 	end
 
 	def process_price_request_jita(command)
@@ -99,10 +119,10 @@ class Parser
 			maybe_items += "\r\n#{command.arguments[i]}"
 		end
 		
-		process_price_request(command, maybe_items, by_jita_region.method(:get_by_region_jita), "Jita")
+		process_price_request(command, maybe_items, by_jita_region.method(:get_by_region_jita), "Jita", true, true)
 	end
 
-	def process_price_request(command, items, querier, where)
+	def process_price_request(command, items, querier, where, show_total, show_breakdown)
 		fit = EveFit::new @eve_db, items
 		
 		if fit.has_unknown_items
@@ -122,7 +142,9 @@ class Parser
 		fit.items.each do |item|		
 			lowest = prices[item]
 			if lowest.nil?
-				s += "#{item.name} not available in #{where}\r\n"
+				if show_breakdown
+					s += "#{item.name} not available in #{where}\r\n"
+				end
 			else
 				lowest = lowest * fit.quantity[item]
 				sum += lowest
@@ -132,12 +154,14 @@ class Parser
 					howMany  = "(#{fit.quantity[item]})"
 				end
 
-				s += "#{item.name}#{howMany} is #{Parser::to_eve_price(lowest)} in #{where}\r\n"
+				if show_breakdown
+					s += "#{item.name}#{howMany} is #{Parser::to_eve_price(lowest)} in #{where}\r\n"
+				end
 			end
 		end
 
-		if fit.items.count != 1
-			s+= "Total: #{Parser::to_eve_price(sum)}"
+		if show_total
+			s+= "Total: #{Parser::to_eve_price(sum)} (#{where})"
 		end
 
 		respond(s)

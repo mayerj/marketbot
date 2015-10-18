@@ -7,9 +7,22 @@ class Command
 	def initialize(text)
 		#the first string is the command
 		@command = text.split[0]		
-		@arguments = text[@command.length..-1].lstrip.split(/\r\n/)
+		@arguments = text[@command.length..-1].lstrip.split(/\r|\n/)
 
 		@map = get_arg_map()
+	end
+
+	def get_line(lineno)
+		if lineno == 0
+			l = @arguments[0]
+			m = @map[0]
+
+			start = m[0][:start]
+			en = m[0][:end]
+			return l[start..en]
+		else
+			@arguments[lineno]
+		end
 	end
 
 	def get_argument(lineno, arg)
