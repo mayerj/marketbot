@@ -51,5 +51,8 @@ class TestSimplePriceCommand < MiniTest::Unit::TestCase
 	def test_command_get_rest
 		command = Command.new "pricehub Nestor"
 		assert_equal "Nestor", command.get_line(0)
+
+		command = Command.new "pricehub omen navy issue"
+		assert_equal "omen navy issue", command.get_line(0)
 	end
 end

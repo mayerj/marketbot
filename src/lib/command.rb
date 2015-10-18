@@ -18,8 +18,7 @@ class Command
 			m = @map[0]
 
 			start = m[0][:start]
-			en = m[0][:end]
-			return l[start..en]
+			return l[start..-1]
 		else
 			@arguments[lineno]
 		end
